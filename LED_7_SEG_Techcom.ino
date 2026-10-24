@@ -244,32 +244,38 @@ void loop()
       checkAndUpdateFirmware();
   }
   display1(Model);
-  String hieu_suat_4 = String(hieu_suat);
-  while(hieu_suat_4.length() < 4)
-  {
-      hieu_suat_4 = "0" + hieu_suat_4;
-  }
+  // String hieu_suat_4 = String(hieu_suat);
+  // while(hieu_suat_4.length() < 5)
+  // {
+  //     hieu_suat_4 = "0" + hieu_suat_4;
+  // }
 
-  String total_target_4 = String(total_target);
-  while(total_target_4.length() < 4)
-  {
-      total_target_4 = "0" + total_target_4;
-  }
+  // String total_target_4 = String(total_target);
+  // while(total_target_4.length() < 5)
+  // {
+  //     total_target_4 = "0" + total_target_4;
+  // }
   
-  String now_target_4 = String(now_target);
-  while(now_target_4.length() < 4)
-  {
-      now_target_4 = "0" + now_target_4;
-  }
+  // String now_target_4 = String(now_target);
+  // while(now_target_4.length() < 5)
+  // {
+  //     now_target_4 = "0" + now_target_4;
+  // }
 
-  String now_actual_4 = String(now_actual);
-  while(now_actual_4.length() < 4)
-  {
-      now_actual_4 = "0" + now_actual_4;
-  }
-
-  String display2_data = total_target_4+ now_target_4 + now_actual_4 + hieu_suat_4;
-  display2(display2_data);
+  // String now_actual_4 = String(now_actual);
+  // while(now_actual_4.length() < 5)
+  // {
+  //     now_actual_4 = "0" + now_actual_4;
+  // }
+  char msg[50];
+  sprintf(msg,
+          "%d,%d,%d,%d",
+          total_target,
+          now_target,
+          now_actual,
+          hieu_suat);
+  // String display2_data = total_target_4+ now_target_4 + now_actual_4 + hieu_suat_4;
+  display2(msg);
     // static uint32_t last = 0;
     // static int counter = 400;
 
