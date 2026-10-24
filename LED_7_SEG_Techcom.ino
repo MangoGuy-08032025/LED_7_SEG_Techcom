@@ -8,7 +8,7 @@
 #define DISP1_DATA 0
 #define DISP1_CLK  4
 #define DISP1_LAT  5
-#define UPDATE_PIN 21
+#define UPDATE_PIN 15
 //
 // DISPLAY 2 (17 digit)
 //
@@ -224,6 +224,20 @@ void setup()
 
 void loop()
 {
+  if ((digitalRead(UPDATE_PIN) == LOW) )
+  {
+      WiFi.begin(DEFAULT_WIFI_OTA, DEFAULT_PASS_OTA);
+      while (WiFi.status() != WL_CONNECTED) 
+      {
+        Serial.print(".");
+        delay(50);
+        display1("FW_VERSION");
+        display1("----------------");
+      }
+      display1("FW_VERSION");
+      display1("ABCDEF123456789");
+      checkAndUpdateFirmware();
+  }
   display1("1234567890");
   display2("123456781234567");
     // static uint32_t last = 0;
