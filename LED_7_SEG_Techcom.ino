@@ -252,7 +252,7 @@ void loop()
           now_target,
           now_actual,
           hieu_suat);
-  display2(msg);
+  display2("1234567890123456");
     // static uint32_t last = 0;
     // static int counter = 400;
 
