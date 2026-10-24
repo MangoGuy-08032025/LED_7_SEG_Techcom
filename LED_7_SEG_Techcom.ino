@@ -190,7 +190,15 @@ void display2(const String& text)
         DISP2_CLK,
         DISP2_LAT);
 }
+String to4DigitString(int value)
+{
+    value = constrain(value, 0, 9999);
 
+    return String(value / 1000) +
+           String((value / 100) % 10) +
+           String((value / 10) % 10) +
+           String(value % 10);
+}
 
 //====================================================
 // Setup
@@ -245,13 +253,8 @@ void loop()
   }
   display1(Model);
 
-  char msg[50];
-  sprintf(msg,
-          "%d,%d,%d,%d",
-          total_target,
-          now_target,
-          now_actual,
-          hieu_suat);
+  String msg = to4DigitString(total_target) + "," + to4DigitString(now_target) + "," + to4DigitString(now_actual) + "," + to4DigitString(hieu_suat);
+
   display2("msg");
     // static uint32_t last = 0;
     // static int counter = 400;
