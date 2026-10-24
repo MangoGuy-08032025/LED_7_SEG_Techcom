@@ -193,6 +193,7 @@ void display2(const String& text)
 
 void setup()
 {
+    Serial.begin(115200);
     pinMode(DISP1_DATA, OUTPUT);
     pinMode(DISP1_CLK, OUTPUT);
     pinMode(DISP1_LAT, OUTPUT);
@@ -200,11 +201,14 @@ void setup()
     pinMode(DISP2_DATA, OUTPUT);
     pinMode(DISP2_CLK, OUTPUT);
     pinMode(DISP2_LAT, OUTPUT);
-    pinMode(UPDATE_PIN, INPUT)
+    pinMode(UPDATE_PIN, INPUT_PULLUP);
     if ((digitalRead(UPDATE_PIN) == LOW) )
     {
+      WiFi.begin(DEFAULT_WIFI_OTA, DEFAULT_PASS_OTA);
       while (WiFi.status() != WL_CONNECTED) 
       {
+        Serial.print(".");
+        delay(50);
         display1("FW_VERSION");
         display1("----------------");
       }
@@ -212,7 +216,7 @@ void setup()
       display1("ABCDEF123456789");
       checkAndUpdateFirmware();
   }
-
+}
 
 //====================================================
 // Loop
