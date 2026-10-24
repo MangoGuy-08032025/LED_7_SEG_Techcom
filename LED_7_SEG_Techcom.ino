@@ -25,6 +25,11 @@
 // bit:
 // DP G F E D C B A
 //====================================================
+int total_target = 1000;
+int now_target = 500;
+int now_actual = 100;
+int hieu_suat = 0;
+String Model = "DCV584";
 
 uint8_t charTo7Seg(char c)
 {
@@ -49,7 +54,7 @@ uint8_t charTo7Seg(char c)
         case 'D': seg = 0x5E; break;
         case 'E': seg = 0x79; break;
         case 'F': seg = 0x71; break;
-
+        case 'V': seg = 0xC1; break;
         case '-': seg = 0x40; break;
         case ' ': seg = 0x00; break;
 
@@ -238,8 +243,14 @@ void loop()
       display1("ABCDEF123456789");
       checkAndUpdateFirmware();
   }
-  display1("1234567890");
-  display2("123456781234567");
+  display1(Model);
+  String hs = String(hieu_suat);
+  while(hs.length() < 4)
+  {
+      hs = "0" + hs;
+  }
+  String display2_data = String(total_target) + String(now_target) + String(now_actual) + hs;
+  display2(display2_data);
     // static uint32_t last = 0;
     // static int counter = 400;
 
