@@ -209,13 +209,13 @@ void setup()
       {
         Serial.print(".");
         delay(50);
-        display1("FW_VERSION");
+        display1(FW_VERSION);
         display2("----------------");
       }
-      display1("FW_VERSION");
+      display1(FW_VERSION);
       display2("ABCDEF123456789");
       checkAndUpdateFirmware();
-  }
+    }
 }
 
 //====================================================
