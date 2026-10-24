@@ -26,8 +26,8 @@
 // DP G F E D C B A
 //====================================================
 int total_target = 1000;
-int now_target = 500;
-int now_actual = 100;
+int now_target = 12;
+int now_actual = 51;
 int hieu_suat = 10;
 String Model = "DCV584";
 
@@ -252,7 +252,7 @@ void loop()
           now_target,
           now_actual,
           hieu_suat);
-  display2("1234567890123456");
+  display2("msg");
     // static uint32_t last = 0;
     // static int counter = 400;
 
