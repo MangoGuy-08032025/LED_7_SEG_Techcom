@@ -55,7 +55,7 @@ uint8_t charTo7Seg(char c)
         case 'E': seg = 0x79; break;
         case 'F': seg = 0x71; break;
         case 'V': seg = 0xC1; break;
-        case '-': seg = 0x40; break;
+        case '-': seg = 0x3E; break;
         case ' ': seg = 0x00; break;
 
         default : seg = 0x00; break;
@@ -244,18 +244,24 @@ void loop()
       {
         Serial.print(".");
         delay(50);
-        display1("FW_VERSION");
+        display1(FW_VERSION);
         display1("----------------");
       }
-      display1("FW_VERSION");
+      display1(FW_VERSION);
       display1("ABCDEF123456789");
       checkAndUpdateFirmware();
   }
+  
+  while (Model.length() < 10)
+  {
+      Model = " " + Model;
+  }
+
   display1(Model);
 
-  String msg = to4DigitString(total_target) + "," + to4DigitString(now_target) + "," + to4DigitString(now_actual) + "," + to4DigitString(hieu_suat);
+  String msg = to4DigitString(total_target) + to4DigitString(now_target) + to4DigitString(now_actual) + to4DigitString(hieu_suat);
 
-  display2("msg");
+  display2(msg);
     // static uint32_t last = 0;
     // static int counter = 400;
 
