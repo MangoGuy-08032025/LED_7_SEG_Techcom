@@ -210,10 +210,10 @@ void setup()
         Serial.print(".");
         delay(50);
         display1("FW_VERSION");
-        display1("----------------");
+        display2("----------------");
       }
       display1("FW_VERSION");
-      display1("ABCDEF123456789");
+      display2("ABCDEF123456789");
       checkAndUpdateFirmware();
   }
 }
