@@ -44,14 +44,13 @@ RTC_DS3231 rtc;
 // DP G F E D C B A
 //====================================================
 int trang_thai_cam_bien = KHONG_CO_HANG;
-int total_target = 1000;
 int now_target = 12;
 int now_actual = 0;
 int hieu_suat = 10;
 int setup_mode = 0;
 int so_hang_trong_moi_hop = 4;
 String Model = "DVC2834";
-int muc_tieu = 10;
+int muc_tieu = 1000;
 int gio_bat_dau = 8, phut_bat_dau = 0, gio_giai_lao_0 = 12, phut_giai_lao_0 = 0, thoi_gian_giai_lao_0 = 60, gio_giai_lao_1 = 16, phut_giai_lao_1 = 0, thoi_gian_giai_lao_1 = 60;
 int gio_ket_thuc = 0, phut_ket_thuc = 0;
 int so_phut_lam_viec_thuc_te = 0;
@@ -736,7 +735,7 @@ void loop()
         display1(ngay_thang_hien_tai);
     }
 
-  String msg = to4DigitString(total_target) + to4DigitString(now_target) + to4DigitString(now_actual) + to4DigitString(hieu_suat);
+  String msg = to4DigitString(muc_tieu) + to4DigitString(now_target) + to4DigitString(now_actual) + to4DigitString(hieu_suat);
 
   display2(msg);
   
