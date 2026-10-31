@@ -6,6 +6,9 @@
 #include <time.h>
 #include <WebServer.h>
 #include <Preferences.h>
+#include <Wire.h>
+
+#define EEPROM_ADDR 0x57
 
 Preferences prefs;
 WebServer server(80);
@@ -21,9 +24,12 @@ RTC_DS3231 rtc;
 #define DISP1_CLK  4
 #define DISP1_LAT  5
 
-
+#define CLEAR_PIN 16
 #define UPDATE_PIN 15
+
 #define CAM_BIEN_S5 32
+#define CHON_LED_SS 33
+
 #define KHONG_CO_HANG 0
 #define DANG_CO_HANG 1
 #define HANG_VUA_DI_QUA 2
@@ -37,6 +43,9 @@ RTC_DS3231 rtc;
 #define DISPLAY1_DIGITS 10
 #define DISPLAY2_DIGITS 16
 
+#define DEN_DO 17
+#define DEN_VANG 18
+#define DEN_XANH 19
 
 //====================================================
 // Character -> 7 Segment
@@ -44,11 +53,12 @@ RTC_DS3231 rtc;
 // DP G F E D C B A
 //====================================================
 int trang_thai_cam_bien = KHONG_CO_HANG;
-int now_target = 12;
-int now_actual = 0;
+int muc_tieu_hien_tai = 12;
+int san_luong_hien_tai = 0;
 int hieu_suat = 10;
 int setup_mode = 0;
 int so_hang_trong_moi_hop = 4;
+String Line = "Line1";
 String Model = "DVC2834";
 int muc_tieu = 1000;
 int gio_bat_dau = 8, phut_bat_dau = 0, gio_giai_lao_0 = 12, phut_giai_lao_0 = 0, thoi_gian_giai_lao_0 = 60, gio_giai_lao_1 = 16, phut_giai_lao_1 = 0, thoi_gian_giai_lao_1 = 60;
@@ -57,16 +67,24 @@ int so_phut_lam_viec_thuc_te = 0;
 int so_phut_hien_tai = 0;
 int so_phut_da_nghi_giai_lao_0 = 0, so_phut_da_nghi_giai_lao_1 = 0;
 int gio_hien_tai = 0, phut_hien_tai = 0, giay_hien_tai = 0, ngay_hien_tai = 0, thang_hien_tai = 0, nam_hien_tai = 0;
-
+int thoi_gian_bat_dau_theo_phut = 0, thoi_gian_bat_dau_giai_lao_0_theo_phut = 0, thoi_gian_ket_thuc_giai_lao_0_theo_phut = 0;
+int thoi_gian_bat_dau_giai_lao_1_theo_phut = 0, thoi_gian_ket_thuc_giai_lao_1_theo_phut = 0, thoi_gian_ket_thuc_theo_phut = 0;
+int thoi_gian_lam_thuc_te_theo_phut = 0, thoi_gian_giai_lao_0_thuc_te_theo_phut = 0, thoi_gian_giai_lao_1_thuc_te_theo_phut = 0;
+int thoi_gian_hien_tai_theo_phut = 0;
+int thoi_gian_mot_ca_lam_viec_theo_phut = 0;
 int trang_thai_display_1 = 0;
 
 void loadConfig()
 {
   prefs.begin("cfg", true);
 
-  Model = prefs.getString("Model", "");
+  Line = prefs.getString("Line", "1");
+
+  Model = prefs.getString("Model", "DVC2834");
 
   muc_tieu = prefs.getInt("Target", 10);
+
+  so_hang_trong_moi_hop = prefs.getInt("SHTH", 3);
 
   gio_bat_dau = prefs.getInt("GBD", 8);
   phut_bat_dau = prefs.getInt("PBD", 0);
@@ -93,9 +111,13 @@ void saveConfig()
 {
   prefs.begin("cfg", false);
 
+  prefs.putString("Line", Line);
+
   prefs.putString("Model", Model);
 
   prefs.putInt("Target", muc_tieu);
+
+  prefs.putInt("SHTH", so_hang_trong_moi_hop);
 
   prefs.putInt("GBD", gio_bat_dau);
   prefs.putInt("PBD", phut_bat_dau);
@@ -112,6 +134,8 @@ void saveConfig()
   prefs.putInt("PKT", phut_ket_thuc);
 
   prefs.end();
+
+  writeSanLuong(san_luong_hien_tai);
 }
 
 //================================================
@@ -191,6 +215,16 @@ font-weight:bold;
 
 <form action='/save'>
 
+<label>LINE</label>
+<input name='Line' value='
+)rawliteral";
+
+  html += Line;
+
+  html += R"rawliteral('>
+
+<br><br>
+
 <label>MODEL</label>
 <input name='Model' value='
 )rawliteral";
@@ -205,6 +239,24 @@ font-weight:bold;
 <input type='number' name='muc_tieu' value=')rawliteral";
 
   html += String(muc_tieu);
+
+  html += R"rawliteral('>
+
+<br><br>
+
+<label>SAN_LUONG_HIEN_TAI</label>
+<input type='number' name='san_luong_hien_tai' value=')rawliteral";
+
+  html += String(san_luong_hien_tai);
+
+  html += R"rawliteral('>
+
+<br><br>
+
+<label>SO_HANG_TRONG_MOI_HOP</label>
+<input type='number' name='so_hang_trong_moi_hop' value=')rawliteral";
+
+  html += String(so_hang_trong_moi_hop);
 
   html += R"rawliteral('>
 
@@ -343,10 +395,12 @@ SAVE CONFIG
 
 void handleSave()
 {
+  Line = server.arg("Line");
   Model = server.arg("Model");
 
+  san_luong_hien_tai = server.arg("san_luong_hien_tai").toInt();
   muc_tieu = server.arg("muc_tieu").toInt();
-
+  so_hang_trong_moi_hop = server.arg("so_hang_trong_moi_hop").toInt();
   gio_bat_dau = server.arg("gio_bd").toInt();
   phut_bat_dau = server.arg("phut_bd").toInt();
 
@@ -414,7 +468,6 @@ bool syncRTCfromInternet()
         "pool.ntp.org",
         "time.nist.gov"
     );
-    Serial.println("Step 2");
     struct tm timeinfo;
 
     timeout = millis();
@@ -431,7 +484,6 @@ bool syncRTCfromInternet()
             return false;
         }
     }
-    Serial.println("Step 4");
     DateTime ntpTime(
         timeinfo.tm_year + 1900,
         timeinfo.tm_mon + 1,
@@ -440,7 +492,6 @@ bool syncRTCfromInternet()
         timeinfo.tm_min,
         timeinfo.tm_sec
     );
-    Serial.println("Step 5");
     rtc.adjust(ntpTime);
 
     Serial.println("\nRTC Updated");
@@ -451,6 +502,43 @@ bool syncRTCfromInternet()
     WiFi.mode(WIFI_OFF);
 
     return true;
+}
+
+uint8_t charTo7Seg_2_LED_TO(char c)
+{
+    uint8_t seg;
+
+    switch (toupper(c))
+    {
+        case '0': seg = 0x3F; break;
+        case '1': seg = 0x06; break;
+        case '2': seg = 0x5B; break;
+        case '3': seg = 0x4F; break;
+        case '4': seg = 0x66; break;
+        case '5': seg = 0x6D; break;
+        case '6': seg = 0x7D; break;
+        case '7': seg = 0x07; break;
+        case '8': seg = 0x7F; break;
+        case '9': seg = 0x6F; break;
+
+        case 'A': seg = 0x77; break;
+        case 'B': seg = 0x7C; break;
+        case 'C': seg = 0x39; break;
+        case 'D': seg = 0x5E; break;
+        case 'E': seg = 0x79; break;
+        case 'F': seg = 0x71; break;
+        case 'V': seg = 0x3E; break;
+        case 'P': seg = 0x73; break;
+        case 'T': seg = 0x33; break;
+        case 'L': seg = 0x38; break;
+        case 'S': seg = 0x6D; break;
+        case '-': seg = 0x40; break;
+        case ' ': seg = 0x00; break;
+
+        default : seg = 0x00; break;
+    }
+
+    return seg;    // Đảo bit cho Common Anode
 }
 
 uint8_t charTo7Seg(char c)
@@ -547,6 +635,34 @@ int buildBuffer(
     return count;
 }
 
+int buildBuffer_2_LED_TO(
+    const String& text,
+    uint8_t* buffer,
+    int maxLen)
+{
+    int count = 0;
+
+    for (int i = 0; i < text.length(); i++)
+    {
+        char c = text[i];
+
+        if (c == '.')
+        {
+            if (count > 0)
+            {
+                buffer[count - 1] |= 0x80;
+            }
+            continue;
+        }
+
+        if (count >= maxLen)
+            break;
+
+        buffer[count++] = charTo7Seg_2_LED_TO(c);
+    }
+
+    return count;
+}
 
 //====================================================
 // Generic Display Function
@@ -587,6 +703,40 @@ void displayString(
     digitalWrite(latPin, HIGH);
 }
 
+void displayString_2_LED_TO(
+    const String& text,
+    uint8_t digits,
+    uint8_t dataPin,
+    uint8_t clkPin,
+    uint8_t latPin)
+{
+    uint8_t segBuffer[32];
+
+    for (int i = 0; i < 32; i++)
+        segBuffer[i] = 0;
+
+    int used = buildBuffer_2_LED_TO(
+        text,
+        segBuffer,
+        digits);
+
+    digitalWrite(latPin, LOW);
+
+    for (int d = digits - 1; d >= 0; d--)
+    {
+        uint8_t seg = 0;
+
+        if (d < used)
+            seg = segBuffer[d];
+
+        shiftOutByte(
+            dataPin,
+            clkPin,
+            seg);
+    }
+
+    digitalWrite(latPin, HIGH);
+}
 
 //====================================================
 // Display 1
@@ -609,12 +759,25 @@ void display1(const String& text)
 
 void display2(const String& text)
 {
-    displayString(
+  if(digitalRead(CHON_LED_SS) == HIGH)
+  {
+        displayString(
         text,
         DISPLAY2_DIGITS,
         DISP2_DATA,
         DISP2_CLK,
         DISP2_LAT);
+  }
+  else
+  {
+        displayString_2_LED_TO(
+        text,
+        DISPLAY2_DIGITS,
+        DISP2_DATA,
+        DISP2_CLK,
+        DISP2_LAT);
+  }
+
 }
 String to4DigitString(int value)
 {
@@ -624,6 +787,53 @@ String to4DigitString(int value)
            String((value / 100) % 10) +
            String((value / 10) % 10) +
            String(value % 10);
+}
+
+
+
+//=====================
+// Ghi 1 số int 16-bit
+//=====================
+void writeSanLuong(int value)
+{
+    Wire.beginTransmission(EEPROM_ADDR);
+
+    // Địa chỉ bộ nhớ EEPROM
+    Wire.write(0x00); // High byte address
+    Wire.write(0x00); // Low byte address
+
+    // Dữ liệu
+    Wire.write((value >> 8) & 0xFF);
+    Wire.write(value & 0xFF);
+
+    Wire.endTransmission();
+
+    delay(10); // Chờ EEPROM ghi xong
+}
+
+//=====================
+// Đọc 1 số int 16-bit
+//=====================
+int readSanLuong()
+{
+    Wire.beginTransmission(EEPROM_ADDR);
+
+    Wire.write(0x00); // High byte address
+    Wire.write(0x00); // Low byte address
+
+    Wire.endTransmission();
+
+    Wire.requestFrom(EEPROM_ADDR, 2);
+
+    if (Wire.available() >= 2)
+    {
+        byte highByte = Wire.read();
+        byte lowByte  = Wire.read();
+
+        return (highByte << 8) | lowByte;
+    }
+
+    return 0;
 }
 
 //====================================================
@@ -640,8 +850,16 @@ void setup()
     pinMode(DISP2_DATA, OUTPUT);
     pinMode(DISP2_CLK, OUTPUT);
     pinMode(DISP2_LAT, OUTPUT);
+
+    pinMode(DEN_DO, OUTPUT);
+    pinMode(DEN_VANG, OUTPUT);
+    pinMode(DEN_XANH, OUTPUT);
+
     pinMode(UPDATE_PIN, INPUT_PULLUP);
+    pinMode(CLEAR_PIN, INPUT_PULLUP);
     pinMode(CAM_BIEN_S5, INPUT_PULLUP);
+    pinMode(CHON_LED_SS, INPUT_PULLUP);
+
     if ((digitalRead(UPDATE_PIN) == LOW) )
     {
       WiFi.begin(DEFAULT_WIFI_OTA, DEFAULT_PASS_OTA);
@@ -671,8 +889,8 @@ void setup()
     }
     
     loadConfig();
+    san_luong_hien_tai = readSanLuong();
 
-    
     delay(2000);
 }
 
@@ -682,12 +900,81 @@ void setup()
 
 void loop()
 {
+  if(hieu_suat < 80)
+  {
+    digitalWrite(DEN_DO, HIGH);
+    digitalWrite(DEN_XANH, LOW);
+    digitalWrite(DEN_VANG, LOW);
+  }
+  if((hieu_suat > 80) && (hieu_suat < 90))
+  {
+    digitalWrite(DEN_DO, LOW);
+    digitalWrite(DEN_XANH, LOW);
+    digitalWrite(DEN_VANG, HIGH);
+  }
+  if(hieu_suat > 90)
+  {
+    digitalWrite(DEN_DO, LOW);
+    digitalWrite(DEN_XANH, HIGH);
+    digitalWrite(DEN_VANG, LOW);
+  }
+
+  if(digitalRead(CLEAR_PIN) == LOW)
+  {
+    delay(1000);
+    if(digitalRead(CLEAR_PIN) == LOW)
+    {
+      san_luong_hien_tai = 0;
+      writeSanLuong(san_luong_hien_tai);
+    }
+
+  }
+  thoi_gian_hien_tai_theo_phut = gio_hien_tai*60 + phut_hien_tai;
+  thoi_gian_bat_dau_theo_phut = gio_bat_dau * 60 + phut_bat_dau;
+  thoi_gian_bat_dau_giai_lao_0_theo_phut = gio_giai_lao_0 * 60 + phut_giai_lao_0;
+  thoi_gian_bat_dau_giai_lao_1_theo_phut = gio_giai_lao_1 * 60 + phut_giai_lao_1;
+  thoi_gian_ket_thuc_theo_phut = gio_ket_thuc * 60 + phut_ket_thuc;
+
+  thoi_gian_giai_lao_0_thuc_te_theo_phut = thoi_gian_hien_tai_theo_phut - thoi_gian_bat_dau_giai_lao_0_theo_phut;
+  if (thoi_gian_giai_lao_0_thuc_te_theo_phut <= 0)
+  {
+    thoi_gian_giai_lao_0_thuc_te_theo_phut = 0;
+  } 
+  else if(thoi_gian_giai_lao_0_thuc_te_theo_phut >= thoi_gian_giai_lao_0)
+  {
+    thoi_gian_giai_lao_0_thuc_te_theo_phut = thoi_gian_giai_lao_0;
+  }
+  thoi_gian_giai_lao_1_thuc_te_theo_phut = thoi_gian_hien_tai_theo_phut - thoi_gian_bat_dau_giai_lao_1_theo_phut;
+  if (thoi_gian_giai_lao_1_thuc_te_theo_phut <= 0)
+  {
+    thoi_gian_giai_lao_1_thuc_te_theo_phut = 0;
+  } 
+  else if(thoi_gian_giai_lao_1_thuc_te_theo_phut >= thoi_gian_giai_lao_1)
+  {
+    thoi_gian_giai_lao_1_thuc_te_theo_phut = thoi_gian_giai_lao_1;
+  }
+
+  thoi_gian_lam_thuc_te_theo_phut = thoi_gian_hien_tai_theo_phut - thoi_gian_bat_dau_theo_phut - thoi_gian_giai_lao_0_thuc_te_theo_phut - thoi_gian_giai_lao_1_thuc_te_theo_phut;
+  thoi_gian_mot_ca_lam_viec_theo_phut = thoi_gian_ket_thuc_theo_phut - thoi_gian_bat_dau_theo_phut - thoi_gian_giai_lao_0 - thoi_gian_giai_lao_1 + 1;
+  if(thoi_gian_lam_thuc_te_theo_phut <= 0)
+  {
+    thoi_gian_lam_thuc_te_theo_phut = 0;
+  }
+  muc_tieu_hien_tai = (((float)muc_tieu / (float)thoi_gian_mot_ca_lam_viec_theo_phut) * (float(thoi_gian_lam_thuc_te_theo_phut)));
+  if(muc_tieu_hien_tai > muc_tieu)
+  {
+    muc_tieu_hien_tai = muc_tieu;
+  }
+  hieu_suat = int((float)san_luong_hien_tai / (float)muc_tieu_hien_tai * 100.0);
+
+
   getRTC();
     if (digitalRead(UPDATE_PIN) == LOW )
     {
         delay(1000);
         if(digitalRead(UPDATE_PIN) == LOW)
         {
+          trang_thai_display_1 = 3;
             setup_mode = 1;
             WiFi.mode(WIFI_AP);
             WiFi.softAP(
@@ -735,7 +1022,13 @@ void loop()
         display1(ngay_thang_hien_tai);
     }
 
-  String msg = to4DigitString(muc_tieu) + to4DigitString(now_target) + to4DigitString(now_actual) + to4DigitString(hieu_suat);
+    if(trang_thai_display_1 == 3)
+    {
+        String config_str = "SETVP";
+        display1(config_str);
+    }
+
+  String msg = to4DigitString(muc_tieu) + to4DigitString(muc_tieu_hien_tai) + to4DigitString(san_luong_hien_tai) + to4DigitString(hieu_suat);
 
   display2(msg);
   
@@ -757,7 +1050,8 @@ void loop()
   }
   if(trang_thai_cam_bien == HANG_VUA_DI_QUA)
   {
-    now_actual = now_actual + so_hang_trong_moi_hop;
+    san_luong_hien_tai = san_luong_hien_tai + so_hang_trong_moi_hop;
+    writeSanLuong(san_luong_hien_tai);
     delay(1000);
     trang_thai_cam_bien = KHONG_CO_HANG;
     trang_thai_display_1 += 1;
