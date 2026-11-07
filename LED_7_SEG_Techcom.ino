@@ -328,7 +328,7 @@ name='giay_hien_tai' value=')rawliteral";
 
 <div class='row'>
 <div class='col'>
-<label>Gio</label>
+<label>Ngay</label>
 <input type='number' min='1' max='31'
 name='ngay_hien_tai' value=')rawliteral";
 
