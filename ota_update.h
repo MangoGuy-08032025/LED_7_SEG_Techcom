@@ -2,7 +2,7 @@
 #include <HTTPUpdate.h>
 #include <Update.h>
 #include <HTTPClient.h>
-#define FW_VERSION "16"
+#define FW_VERSION "18"
 const char* firmware_url = "https://raw.githubusercontent.com/MangoGuy-08032025/LED_7_SEG_Techcom/main/LED_7_SEG_Techcom.ino.bin";
 const char* version_url  = "https://raw.githubusercontent.com/MangoGuy-08032025/LED_7_SEG_Techcom/main/version.txt";
 String ota_result = "Nothing";

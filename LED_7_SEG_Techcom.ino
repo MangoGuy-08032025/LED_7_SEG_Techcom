@@ -29,6 +29,7 @@ RTC_DS3231 rtc;
 
 #define CAM_BIEN_S5 32
 #define CHON_LED_SS 33
+#define KICH_HOAT_SS 34
 
 #define KHONG_CO_HANG 0
 #define DANG_CO_HANG 1
@@ -53,12 +54,16 @@ RTC_DS3231 rtc;
 // DP G F E D C B A
 //====================================================
 int trang_thai_cam_bien = KHONG_CO_HANG;
+
 int muc_tieu_hien_tai = 12;
 int san_luong_hien_tai = 0;
 int hieu_suat = 10;
 int setup_mode = 0;
 int so_hang_trong_moi_hop = 4;
-String Line = "Line1";
+String Wifi = "SMC";
+String Password = "Techcom2025@";
+String Line = "1";
+String Ten_Line = "Line " + Line; 
 String Model = "DVC2834";
 int muc_tieu = 1000;
 int gio_bat_dau = 8, phut_bat_dau = 0, gio_giai_lao_0 = 12, phut_giai_lao_0 = 0, thoi_gian_giai_lao_0 = 60, gio_giai_lao_1 = 16, phut_giai_lao_1 = 0, thoi_gian_giai_lao_1 = 60;
@@ -79,7 +84,8 @@ void loadConfig()
   prefs.begin("cfg", true);
 
   Line = prefs.getString("Line", "1");
-
+  Wifi = prefs.getString("Wifi", "SMC");
+  Password = prefs.getString("Password", "Techcom2025@");
   Model = prefs.getString("Model", "DVC2834");
 
   muc_tieu = prefs.getInt("Target", 10);
@@ -112,7 +118,8 @@ void saveConfig()
   prefs.begin("cfg", false);
 
   prefs.putString("Line", Line);
-
+  prefs.putString("Wifi", Wifi);
+  prefs.putString("Password", Password);
   prefs.putString("Model", Model);
 
   prefs.putInt("Target", muc_tieu);
@@ -211,7 +218,7 @@ font-weight:bold;
 
 <div class='card'>
 
-<h2>ESP32 CONFIG</h2>
+<h2>TECHCOM CONFIG</h2>
 
 <form action='/save'>
 
@@ -220,6 +227,26 @@ font-weight:bold;
 )rawliteral";
 
   html += Line;
+
+  html += R"rawliteral('>
+
+<br><br>
+
+<label>Wifi</label>
+<input name='Wifi' value='
+)rawliteral";
+
+  html += Wifi;
+
+  html += R"rawliteral('>
+
+<br><br>
+
+<label>Password</label>
+<input name='Password' value='
+)rawliteral";
+
+  html += Password;
 
   html += R"rawliteral('>
 
@@ -261,6 +288,76 @@ font-weight:bold;
   html += R"rawliteral('>
 
 <br><br>
+
+<h3>THOI GIAN HIEN TAI</h3>
+
+<div class='row'>
+<div class='col'>
+<label>Gio</label>
+<input type='number' min='0' max='23'
+name='gio_hien_tai' value=')rawliteral";
+
+  html += String(gio_hien_tai);
+
+  html += R"rawliteral('>
+</div>
+
+<div class='col'>
+<label>Phut</label>
+<input type='number' min='0' max='59'
+name='phut_hien_tai' value=')rawliteral";
+
+  html += String(phut_hien_tai);
+
+  html += R"rawliteral('>
+</div>
+
+<div class='col'>
+<label>Giay</label>
+<input type='number' min='0' max='59'
+name='giay_hien_tai' value=')rawliteral";
+
+  html += String(giay_hien_tai);
+
+  html += R"rawliteral('>
+</div>
+
+</div>
+
+<h3>NGAY HIEN TAI</h3>
+
+<div class='row'>
+<div class='col'>
+<label>Gio</label>
+<input type='number' min='1' max='31'
+name='ngay_hien_tai' value=')rawliteral";
+
+  html += String(ngay_hien_tai);
+
+  html += R"rawliteral('>
+</div>
+
+<div class='col'>
+<label>Thang</label>
+<input type='number' min='1' max='12'
+name='thang_hien_tai' value=')rawliteral";
+
+  html += String(thang_hien_tai);
+
+  html += R"rawliteral('>
+</div>
+
+<div class='col'>
+<label>Nam</label>
+<input type='number' min='2000' max='2100'
+name='nam_hien_tai' value=')rawliteral";
+
+  html += String(nam_hien_tai);
+
+  html += R"rawliteral('>
+</div>
+
+</div>
 
 <h3>BAT DAU</h3>
 
@@ -397,7 +494,8 @@ void handleSave()
 {
   Line = server.arg("Line");
   Model = server.arg("Model");
-
+  Wifi = server.arg("Wifi");
+  Password = server.arg("Password");
   san_luong_hien_tai = server.arg("san_luong_hien_tai").toInt();
   muc_tieu = server.arg("muc_tieu").toInt();
   so_hang_trong_moi_hop = server.arg("so_hang_trong_moi_hop").toInt();
@@ -424,7 +522,22 @@ void handleSave()
 
   server.send(200, "text/html", page);
   delay(2000);
-
+  ngay_hien_tai = server.arg("ngay_hien_tai").toInt();
+  thang_hien_tai = server.arg("thang_hien_tai").toInt();
+  nam_hien_tai = server.arg("nam_hien_tai").toInt();
+  gio_hien_tai = server.arg("gio_hien_tai").toInt();
+  phut_hien_tai = server.arg("phut_hien_tai").toInt();
+  giay_hien_tai = server.arg("giay_hien_tai").toInt();
+  DateTime ntpTime(
+        nam_hien_tai,
+        thang_hien_tai,
+        ngay_hien_tai,
+        gio_hien_tai,
+        phut_hien_tai,
+        giay_hien_tai
+    );
+  rtc.adjust(ntpTime);
+  delay(1000);
   ESP.restart();
 }
 
@@ -478,7 +591,7 @@ bool syncRTCfromInternet()
         delay(500);
         Serial.print("*");
 
-        if (millis() - timeout > 10000)
+        if (millis() - timeout > 100000)
         {
             Serial.println("\nNTP Failed");
             return false;
@@ -504,7 +617,7 @@ bool syncRTCfromInternet()
     return true;
 }
 
-uint8_t charTo7Seg_2_LED_TO(char c)
+uint8_t charTo7Seg_LED_TO(char c)
 {
     uint8_t seg;
 
@@ -635,7 +748,7 @@ int buildBuffer(
     return count;
 }
 
-int buildBuffer_2_LED_TO(
+int buildBuffer_LED_TO(
     const String& text,
     uint8_t* buffer,
     int maxLen)
@@ -658,7 +771,7 @@ int buildBuffer_2_LED_TO(
         if (count >= maxLen)
             break;
 
-        buffer[count++] = charTo7Seg_2_LED_TO(c);
+        buffer[count++] = charTo7Seg_LED_TO(c);
     }
 
     return count;
@@ -680,6 +793,7 @@ void displayString(
     for (int i = 0; i < 32; i++)
         segBuffer[i] = 0;
 
+    
     int used = buildBuffer(
         text,
         segBuffer,
@@ -703,7 +817,7 @@ void displayString(
     digitalWrite(latPin, HIGH);
 }
 
-void displayString_2_LED_TO(
+void displayString_LED_TO(
     const String& text,
     uint8_t digits,
     uint8_t dataPin,
@@ -715,7 +829,7 @@ void displayString_2_LED_TO(
     for (int i = 0; i < 32; i++)
         segBuffer[i] = 0;
 
-    int used = buildBuffer_2_LED_TO(
+    int used = buildBuffer_LED_TO(
         text,
         segBuffer,
         digits);
@@ -744,12 +858,24 @@ void displayString_2_LED_TO(
 
 void display1(const String& text)
 {
-    displayString(
+  if(digitalRead(CHON_LED_SS) == HIGH)
+  {
+        displayString(
         text,
         DISPLAY1_DIGITS,
         DISP1_DATA,
         DISP1_CLK,
         DISP1_LAT);
+  }
+  else
+  {
+        displayString_LED_TO(
+        text,
+        DISPLAY1_DIGITS,
+        DISP1_DATA,
+        DISP1_CLK,
+        DISP1_LAT);
+  }
 }
 
 
@@ -770,7 +896,7 @@ void display2(const String& text)
   }
   else
   {
-        displayString_2_LED_TO(
+        displayString_LED_TO(
         text,
         DISPLAY2_DIGITS,
         DISP2_DATA,
@@ -789,6 +915,14 @@ String to4DigitString(int value)
            String(value % 10);
 }
 
+String to3DigitString(int value)
+{
+    value = constrain(value, 0, 999);
+
+    return String((value / 100) % 10) +
+           String(value / 10) +
+           String(value % 10);
+}
 
 
 //=====================
@@ -855,14 +989,26 @@ void setup()
     pinMode(DEN_VANG, OUTPUT);
     pinMode(DEN_XANH, OUTPUT);
 
+    digitalWrite(DISP1_DATA, HIGH);
+    digitalWrite(DISP1_CLK, HIGH);
+    digitalWrite(DISP1_LAT, HIGH);
+    digitalWrite(DISP2_DATA, HIGH);
+    digitalWrite(DISP2_CLK, HIGH);
+    digitalWrite(DISP2_LAT, HIGH);
+    digitalWrite(DEN_DO, HIGH);
+    digitalWrite(DEN_VANG, HIGH);
+    digitalWrite(DEN_XANH, HIGH);
+    while(1);
+
     pinMode(UPDATE_PIN, INPUT_PULLUP);
     pinMode(CLEAR_PIN, INPUT_PULLUP);
     pinMode(CAM_BIEN_S5, INPUT_PULLUP);
     pinMode(CHON_LED_SS, INPUT_PULLUP);
-
+    pinMode(KICH_HOAT_SS, INPUT_PULLUP);
     if ((digitalRead(UPDATE_PIN) == LOW) )
     {
-      WiFi.begin(DEFAULT_WIFI_OTA, DEFAULT_PASS_OTA);
+      WiFi.mode(WIFI_STA);  // Chế độ thu wifi
+      WiFi.begin(Wifi.c_str(), Password.c_str());
       while (WiFi.status() != WL_CONNECTED) 
       {
         Serial.print(".");
@@ -884,8 +1030,15 @@ void setup()
     }
     else
     {
-        syncRTCfromInternet();
-        display1("SUC-T     ");
+        if(true == syncRTCfromInternet())
+        {
+          display1("SUC-T     ");
+        }
+        else
+        {
+          display1("FA1L-T    ");
+        }
+        
     }
     
     loadConfig();
@@ -978,7 +1131,7 @@ void loop()
             setup_mode = 1;
             WiFi.mode(WIFI_AP);
             WiFi.softAP(
-                "ESP32_CONFIG",
+                 Ten_Line,
                 "12345678");
 
             Serial.println();
@@ -1028,9 +1181,19 @@ void loop()
         display1(config_str);
     }
 
-  String msg = to4DigitString(muc_tieu) + to4DigitString(muc_tieu_hien_tai) + to4DigitString(san_luong_hien_tai) + to4DigitString(hieu_suat);
 
-  display2(msg);
+    if(digitalRead(CHON_LED_SS) == HIGH)
+    {
+      String msg = to4DigitString(muc_tieu) + to4DigitString(muc_tieu_hien_tai) + to4DigitString(san_luong_hien_tai) + to4DigitString(hieu_suat);
+      display2(msg);
+    }
+    else
+    {
+      String msg_led_to = to4DigitString(muc_tieu) + to4DigitString(muc_tieu_hien_tai) + to4DigitString(san_luong_hien_tai) + to3DigitString(hieu_suat);
+      display2(msg_led_to);
+    }
+
+  
   
   if((digitalRead(CAM_BIEN_S5) == LOW) && (trang_thai_cam_bien == KHONG_CO_HANG))
   {
