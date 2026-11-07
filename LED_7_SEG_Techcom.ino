@@ -995,10 +995,7 @@ void setup()
     digitalWrite(DISP2_DATA, HIGH);
     digitalWrite(DISP2_CLK, HIGH);
     digitalWrite(DISP2_LAT, HIGH);
-    digitalWrite(DEN_DO, HIGH);
-    digitalWrite(DEN_VANG, HIGH);
-    digitalWrite(DEN_XANH, HIGH);
-    while(1);
+
 
     pinMode(UPDATE_PIN, INPUT_PULLUP);
     pinMode(CLEAR_PIN, INPUT_PULLUP);
