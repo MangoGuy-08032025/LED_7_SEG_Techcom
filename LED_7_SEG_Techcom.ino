@@ -557,7 +557,7 @@ bool syncRTCfromInternet()
 {
     Serial.println("Connecting WiFi...");
 
-    WiFi.begin(DEFAULT_WIFI_OTA, DEFAULT_PASS_OTA);
+    // WiFi.begin(DEFAULT_WIFI_OTA, DEFAULT_PASS_OTA);
 
     uint32_t timeout = millis();
 
@@ -989,14 +989,6 @@ void setup()
     pinMode(DEN_VANG, OUTPUT);
     pinMode(DEN_XANH, OUTPUT);
 
-    digitalWrite(DISP1_DATA, HIGH);
-    digitalWrite(DISP1_CLK, HIGH);
-    digitalWrite(DISP1_LAT, HIGH);
-    digitalWrite(DISP2_DATA, HIGH);
-    digitalWrite(DISP2_CLK, HIGH);
-    digitalWrite(DISP2_LAT, HIGH);
-
-
     pinMode(UPDATE_PIN, INPUT_PULLUP);
     pinMode(CLEAR_PIN, INPUT_PULLUP);
     pinMode(CAM_BIEN_S5, INPUT_PULLUP);
@@ -1027,6 +1019,8 @@ void setup()
     }
     else
     {
+        WiFi.mode(WIFI_STA);  // Chế độ thu wifi
+        WiFi.begin(Wifi.c_str(), Password.c_str());
         if(true == syncRTCfromInternet())
         {
           display1("SUC-T     ");
