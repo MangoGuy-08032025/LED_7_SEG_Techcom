@@ -63,7 +63,6 @@ int so_hang_trong_moi_hop = 4;
 String Wifi = "SMC";
 String Password = "Techcom2025@";
 String Line = "1";
-String Ten_Line = "Line " + Line; 
 String Model = "DVC2834";
 int muc_tieu = 1000;
 int gio_bat_dau = 8, phut_bat_dau = 0, gio_giai_lao_0 = 12, phut_giai_lao_0 = 0, thoi_gian_giai_lao_0 = 60, gio_giai_lao_1 = 16, phut_giai_lao_1 = 0, thoi_gian_giai_lao_1 = 60;
@@ -1113,13 +1112,14 @@ void loop()
 
 
   getRTC();
-    if (digitalRead(UPDATE_PIN) == LOW )
+    if ((digitalRead(UPDATE_PIN) == LOW ) && (setup_mode == 0))
     {
         delay(1000);
-        if(digitalRead(UPDATE_PIN) == LOW)
+        if ((digitalRead(UPDATE_PIN) == LOW ) && (setup_mode == 0))
         {
           trang_thai_display_1 = 3;
             setup_mode = 1;
+            String Ten_Line = "Line " + Line; 
             WiFi.mode(WIFI_AP);
             WiFi.softAP(
                  Ten_Line,
