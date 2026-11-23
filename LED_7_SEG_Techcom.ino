@@ -1116,20 +1116,13 @@ void loop()
     delay(1000);
     if(digitalRead(DOWN_PIN) == LOW)
     {
-      san_luong_hien_tai = san_luong_hien_tai + so_hang_trong_moi_hop;
+      san_luong_hien_tai = san_luong_hien_tai - so_hang_trong_moi_hop;
       hieu_suat = int((float)san_luong_hien_tai / (float)muc_tieu_hien_tai * 100.0);
       writeSanLuong(san_luong_hien_tai);
     }
     delay(100);
     while(digitalRead(DOWN_PIN) == LOW)
     {
-      if(trang_thai_display_1 == 3)
-      {
-          String config_str = "SETVP";
-          display1(config_str);
-      }
-
-
       if(digitalRead(CHON_LED_SS) == HIGH)
       {
         String msg = to4DigitString(muc_tieu) + to4DigitString(muc_tieu_hien_tai) + to4DigitString(san_luong_hien_tai) + to4DigitString(hieu_suat);
