@@ -1090,13 +1090,6 @@ void loop()
     delay(100);
     while(digitalRead(UP_PIN) == LOW)
     {
-      if(trang_thai_display_1 == 3)
-      {
-          String config_str = "SETVP";
-          display1(config_str);
-      }
-
-
       if(digitalRead(CHON_LED_SS) == HIGH)
       {
         String msg = to4DigitString(muc_tieu) + to4DigitString(muc_tieu_hien_tai) + to4DigitString(san_luong_hien_tai) + to4DigitString(hieu_suat);
