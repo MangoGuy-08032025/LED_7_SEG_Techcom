@@ -26,6 +26,8 @@ RTC_DS3231 rtc;
 
 #define CLEAR_PIN 16
 #define UPDATE_PIN 15
+#define UP_PIN 13
+#define DOWN_PIN 14
 
 #define CAM_BIEN_S5 32
 #define CHON_LED_SS 33
@@ -990,6 +992,8 @@ void setup()
 
     pinMode(UPDATE_PIN, INPUT_PULLUP);
     pinMode(CLEAR_PIN, INPUT_PULLUP);
+    pinMode(UP_PIN, INPUT_PULLUP);
+    pinMode(DOWN_PIN, INPUT_PULLUP);
     pinMode(CAM_BIEN_S5, INPUT_PULLUP);
     pinMode(CHON_LED_SS, INPUT_PULLUP);
     pinMode(KICH_HOAT_SS, INPUT_PULLUP);
@@ -1048,18 +1052,21 @@ void loop()
     digitalWrite(DEN_DO, HIGH);
     digitalWrite(DEN_XANH, LOW);
     digitalWrite(DEN_VANG, LOW);
+    Serial.println("DEN_DO");
   }
   if((hieu_suat > 80) && (hieu_suat < 90))
   {
     digitalWrite(DEN_DO, LOW);
     digitalWrite(DEN_XANH, LOW);
     digitalWrite(DEN_VANG, HIGH);
+    Serial.println("DEN_VANG");
   }
   if(hieu_suat > 90)
   {
     digitalWrite(DEN_DO, LOW);
     digitalWrite(DEN_XANH, HIGH);
     digitalWrite(DEN_VANG, LOW);
+    Serial.println("DEN_XANH");
   }
 
   if(digitalRead(CLEAR_PIN) == LOW)
@@ -1070,7 +1077,71 @@ void loop()
       san_luong_hien_tai = 0;
       writeSanLuong(san_luong_hien_tai);
     }
+  }
+  if(digitalRead(UP_PIN) == LOW)
+  {
+    delay(1000);
+    if(digitalRead(UP_PIN) == LOW)
+    {
+      san_luong_hien_tai = san_luong_hien_tai + so_hang_trong_moi_hop;
+      hieu_suat = int((float)san_luong_hien_tai / (float)muc_tieu_hien_tai * 100.0);
+      writeSanLuong(san_luong_hien_tai);
+    }
+    delay(100);
+    while(digitalRead(UP_PIN) == LOW)
+    {
+      if(trang_thai_display_1 == 3)
+      {
+          String config_str = "SETVP";
+          display1(config_str);
+      }
 
+
+      if(digitalRead(CHON_LED_SS) == HIGH)
+      {
+        String msg = to4DigitString(muc_tieu) + to4DigitString(muc_tieu_hien_tai) + to4DigitString(san_luong_hien_tai) + to4DigitString(hieu_suat);
+        display2(msg);
+      }
+      else
+      {
+        String msg_led_to = to4DigitString(muc_tieu) + to4DigitString(muc_tieu_hien_tai) + to4DigitString(san_luong_hien_tai) + to3DigitString(hieu_suat);
+        display2(msg_led_to);
+      }
+    }
+    delay(1000);
+  }
+
+  if(digitalRead(DOWN_PIN) == LOW)
+  {
+    delay(1000);
+    if(digitalRead(DOWN_PIN) == LOW)
+    {
+      san_luong_hien_tai = san_luong_hien_tai + so_hang_trong_moi_hop;
+      hieu_suat = int((float)san_luong_hien_tai / (float)muc_tieu_hien_tai * 100.0);
+      writeSanLuong(san_luong_hien_tai);
+    }
+    delay(100);
+    while(digitalRead(DOWN_PIN) == LOW)
+    {
+      if(trang_thai_display_1 == 3)
+      {
+          String config_str = "SETVP";
+          display1(config_str);
+      }
+
+
+      if(digitalRead(CHON_LED_SS) == HIGH)
+      {
+        String msg = to4DigitString(muc_tieu) + to4DigitString(muc_tieu_hien_tai) + to4DigitString(san_luong_hien_tai) + to4DigitString(hieu_suat);
+        display2(msg);
+      }
+      else
+      {
+        String msg_led_to = to4DigitString(muc_tieu) + to4DigitString(muc_tieu_hien_tai) + to4DigitString(san_luong_hien_tai) + to3DigitString(hieu_suat);
+        display2(msg_led_to);
+      }
+    }
+    delay(1000);
   }
   thoi_gian_hien_tai_theo_phut = gio_hien_tai*60 + phut_hien_tai;
   thoi_gian_bat_dau_theo_phut = gio_bat_dau * 60 + phut_bat_dau;
